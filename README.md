@@ -1,28 +1,90 @@
-# Data1030-Project
+# Predicting a Heart Attack (BRFSS 2022)
 
-Predicting a Heart Attack 
+> **DATA 1030 Final Project — Brown University**  
+> **Author:** Arpit Dang  
+
+This repository contains code and documentation for predicting the likelihood that an individual has **ever had a heart attack** using the 2022 **BRFSS** (Behavioral Risk Factor Surveillance System) survey.  
+The project frames the task as a **binary classification** problem with a strong emphasis on **recall**, evaluated primarily with the **F₂ score** (recall-heavy).
+
+---
+
+## 📊 Key Results
+
+- **Dataset (after cleaning):** 246,022 respondents (39 features)  
+- **Class imbalance:** ~5.5% positive (“HadHeartAttack = Yes”)  
+- **Train/Val/Test split:** 60% / 20% / 20% with **stratification**  
+- **Best model:** Logistic Regression  
+  - **Best F₂ (single run):** 0.531 (Elastic Net, `l1_ratio=0.5`, `C=10`)  
+  - **Mean F₂ (across seeds):** 0.512  
+  - **Accuracy:** 83.4%  
+- **Baseline F₂:** 0.22 (predicting all positives)  
+- **Top predictors (consistent across methods):**
+  - HadAngina (angina history)
+  - Age category  
+  - Sex  
+  - General health, prior chest scan, smoking status  
+
+---
 
 
-Arpit Dang
+---
 
-Data Science Institute at Brown University
+## 🧮 Data & Features
 
-DATA 1030 
+- **Source:** BRFSS 2022 (U.S. adult survey)  
+- **Target:** `HadHeartAttack` ∈ {No, Yes}  
+- **Features (39 total):**
+  - Continuous (6): scaled with `MinMaxScaler`  
+  - Ordinal (6): encoded with `OrdinalEncoder` (explicit order)  
+  - Categorical (27):
+    - Binary (23): encoded with `OrdinalEncoder` (`No→0`, `Yes→1`)  
+    - Non-binary (4): encoded with `OneHotEncoder`
 
-December 15th, 2024
+**No missing data** remained after cleaning.  
+**Correlations:** max 0.86 (Weight vs BMI) — both retained for clinical interpretability.
+
+---
+
+## ⚙️ Modeling & Training
+
+**Models evaluated:**
+- Logistic Regression (L1, L2, Elastic Net)
+- Random Forest Classifier
+- Support Vector Classifier (trained on 20% of data)
+- XGBoost (with `scale_pos_weight=17.31`)
+
+**Hyperparameter grids:**
+- **Logistic Regression:**  
+  `penalty ∈ {l1, l2, elasticnet(l1_ratio=0.5)}`  
+  `C ∈ {1e-3,…,1e2}`, `class_weight='balanced'`
+- **Random Forest:**  
+  `max_depth ∈ {1,3,10,30,100,300,None}`  
+  `max_features ∈ {0.25,0.5,0.75,1.0}`, `class_weight='balanced'`
+- **SVC:**  
+  `C ∈ {0.01,0.1,1,10,100}`, `gamma ∈ {scale, auto}`, `class_weight='balanced'`
+- **XGBoost:**  
+  `learning_rate ∈ {1e-3,1e-2,0.1,1,10,100}`,  
+  `max_depth ∈ {5,10,30,100,300}`,  
+  `scale_pos_weight=17.31`
+
+**Evaluation metrics:**
+- Primary: **F₂ score (β=2)**  
+- Also tracked: precision, recall, accuracy, PR curves  
+- Averaged over **5 random seeds**
+
+---
+
+## 🔎 Explainability
+
+- Used **Permutation Importance**, **Logistic Coefficients**, and **SHAP Values**
+- **Key features influencing predictions:**
+  - HadAngina (strongest)
+  - AgeCategory  
+  - Sex  
+  - GeneralHealth  
+  - SmokerStatus  
+- Visualized case-level SHAP force plots for interpretability.
+
+---
 
 
-
-
-All the softwares and packages were used in data1030.yml file.
-
-
-
-
-Heart attacks, a critical health concern, occur with alarming frequency in the United States. On average, someone has a heart attack every 40 seconds (Tsao et al., 2023). Approximately half of Americans have at least one of the three major risk factors for heart disease: high blood pressure, high cholesterol or smoking (Fryar et al., 2010). These statistics highlight the need for increased awareness, proactive prevention, and prompt medical intervention to combat this widespread health crisis.
-
-The Centers for Disease Control and Prevention (CDC) have conducted annual Behavioral Risk Factor Surveillance System (BRFSS) surveys since 1984. BRFSS is a collaborative project between all the US states and US territories that collects data on health-related risk behaviours and chronic health conditions. This analysis focuses on the 2022 BRFSS survey (National Center for Chronic Disease Prevention and Health Promotion, 2023). The survey included 400,000+ American adults and collected various variables that may contribute to heart attacks. The survey provided valuable insights into the factors influencing heart attack risks. 
-
-The author removed the data points with missing values, leaving the dataset with 246,022 data points (Pytlak, 2023). The original survey by the CDC collected approximately 300 variables, narrowed down to 39 features deemed most relevant for heart attacks by the author. The target variable is ‘HadHeartAttack’, a binary outcome of either a ‘Yes’ or a ‘No’, framing this as a classification problem. 
-
-Numerous efforts have been made to develop machine learning models using this dataset in the discussion section on Kaggle, where the dataset was sourced from. However, these attempts have primarily been made by random individuals without established credibility in the field. Moreover, none of these attempts have been formally edited or published on any credible platform. However, many studies attempt to predict heart attack possibilities using different datasets. Tn et al. (2023) employed various machine learning algorithms on a separate dataset, and their findings suggested that chest pain (angina) and heart scans heavily correlate in predicting heart attacks. 
